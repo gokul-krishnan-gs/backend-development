@@ -161,7 +161,7 @@ When a package is uninstalled, it is deleted from the `node_modules/` folder and
 
 If the `node_modules` folder is deleted, all packages can be easily reinstalled using the command: `npm install`.
 ---
-# Node.js Path Module Guide
+# Node.js Path Module 
 
 ## 🧭 1. What is the Path Module?
 
@@ -347,7 +347,7 @@ console.log(file);
   
 ---
 
-# Node.js File System (fs) Module Guide
+# Node.js File System (fs) Module 
 
 ## 🧱 1. What is the File System (fs) Module?
 
@@ -548,3 +548,255 @@ readWrite();
 ```
 
 ✅ Cleaner and easier to manage for modern async/await style apps.
+
+
+---
+# Node.js HTTP Module
+
+## What is the HTTP Module?
+
+The http module in Node.js allows you to create web servers and handle HTTP requests and responses without any external packages. It's a built-in module — no need to install it.
+
+## Importing the HTTP Module
+
+```javascript
+const http = require('http');
+```
+
+## Creating a Server
+
+```javascript
+const server = http.createServer((req, res) => {
+  // req = request object (incoming data)
+  // res = response object (outgoing data)
+  
+  res.writeHead(200, { 'Content-Type': 'text/plain' });
+  res.end('Hello Gokul, your Node.js server is running!');
+});
+```
+
+## Starting the Server
+
+```javascript
+server.listen(3000, () => {
+  console.log('Server running at http://localhost:3000');
+});
+```
+
+## Routing in Node.js (Basic Way)
+
+You can handle multiple routes by checking the URL:
+
+```javascript
+const http = require('http');
+
+const server = http.createServer((req, res) => {
+  res.setHeader('Content-Type', 'text/plain');
+
+  if (req.url === '/') {
+    res.end('Home Page');
+  } else if (req.url === '/about') {
+    res.end('About Page');
+  } else if (req.url === '/contact') {
+    res.end('Contact Page');
+  } else {
+    res.statusCode = 404;
+    res.end('404 Page Not Found');
+  }
+});
+
+server.listen(3000, () => {
+  console.log('Server running on port 3000');
+});
+```
+
+## Request and Response Objects
+
+- **req.url** → Path of the request (e.g., /about)
+- **req.method** → HTTP method (e.g., GET, POST)
+- **res.writeHead(statusCode, headers)** → Set response headers
+- **res.end(data)** → End the response and send data to the client
+
+## Synchronous vs Asynchronous
+
+The HTTP module is non-blocking (asynchronous) by default. It can handle thousands of client requests efficiently without creating multiple threads.
+
+## Summary
+
+| Feature | Description |
+|---------|-------------|
+| Module Name | http |
+| Purpose | Create servers and handle requests/responses |
+| Routing | Done manually by checking req.url |
+| Type | Core (built-in) module |
+| Common Port | 3000 or 8080 |
+
+## HTTP Methods
+
+You can check the method with req.method (always uppercase).
+
+Use methods properly for RESTful APIs:
+
+- **GET** → Read
+- **POST** → Create
+- **PUT/PATCH** → Update
+- **DELETE** → Delete
+
+In real projects, we use frameworks like Express.js to simplify this process.
+
+## Handling Different HTTP Methods
+
+Let's handle GET, POST, PUT, and DELETE using req.method and req.url:
+
+```javascript
+const http = require('http');
+
+const server = http.createServer((req, res) => {
+  res.setHeader('Content-Type', 'text/plain');
+
+  if (req.url === '/users' && req.method === 'GET') {
+    res.end('Fetching all users...');
+  }
+
+  else if (req.url === '/users' && req.method === 'POST') {
+    res.end('Creating a new user...');
+  }
+
+  else if (req.url === '/users' && req.method === 'PUT') {
+    res.end('Updating user details...');
+  }
+
+  else if (req.url === '/users' && req.method === 'DELETE') {
+    res.end('Deleting a user...');
+  }
+
+  else {
+    res.statusCode = 404;
+    res.end('404 Not Found');
+  }
+});
+
+server.listen(3000, () => console.log('Server running on port 3000'));
+```
+
+### Method Explanation
+
+| Method | Purpose | Example Use |
+|--------|---------|-------------|
+| GET | Fetch data from the server | Display list of users |
+| POST | Send data to the server | Submit a new user form |
+| PUT | Update existing data | Change full user details |
+| DELETE | Remove data from the server | Delete a specific user |
+
+## HTTP Response Object (res) Methods and Properties
+
+When you create a server using the http module:
+
+```javascript
+const server = http.createServer((req, res) => { ... });
+```
+
+The res object (response) allows you to:
+- Set headers
+- Set status code and status message
+- Send data back to the client
+
+### 1. res.setHeader(name, value)
+
+Sets a specific HTTP header (key–value pair) for the response.
+
+```javascript
+res.setHeader('Content-Type', 'text/html');
+res.setHeader('X-Powered-By', 'Node.js');
+```
+
+**Use:** To tell the browser what kind of content you're sending (HTML, JSON, plain text, etc.)
+
+### 2. res.statusCode
+
+Sets the numeric HTTP status code (e.g., 200 for OK, 404 for Not Found).
+
+```javascript
+res.statusCode = 200;  // OK
+```
+
+**Common status codes:**
+
+| Code | Meaning |
+|------|---------|
+| 200 | OK |
+| 201 | Created |
+| 400 | Bad Request |
+| 401 | Unauthorized |
+| 404 | Not Found |
+| 500 | Internal Server Error |
+
+### 3. res.statusMessage
+
+Sets a short text message that goes with the status code. This is optional — browsers usually use default messages.
+
+```javascript
+res.statusCode = 404;
+res.statusMessage = 'Page Not Found';
+```
+
+This would send:
+```
+HTTP/1.1 404 Page Not Found
+```
+
+### 4. res.writeHead(statusCode, headers)
+
+Sets the status code and response headers together in one line. It's a shortcut method.
+
+```javascript
+res.writeHead(200, { 'Content-Type': 'text/plain', 'X-Powered-By': 'Node.js' });
+```
+
+**Example:**
+
+```javascript
+res.writeHead(404, { 'Content-Type': 'text/plain' });
+res.end('404 - Page Not Found');
+```
+
+### 5. res.write(data)
+
+Writes data to the response body. You can call this multiple times before ending.
+
+```javascript
+res.write('Hello ');
+res.write('Gokul!');
+```
+
+### 6. res.end([data])
+
+Ends the response — this must be called for every request, or the browser will keep waiting. You can also send the final chunk of data inside it.
+
+```javascript
+res.end('Server response completed!');
+```
+
+## Example Combining All Methods
+
+```javascript
+const http = require('http');
+
+const server = http.createServer((req, res) => {
+  // Set header
+  res.setHeader('Content-Type', 'text/plain');
+
+  // Set status code and message
+  res.statusCode = 200;
+  res.statusMessage = 'OK';
+
+  // Write Head (optional shortcut)
+  // res.writeHead(200, { 'Content-Type': 'text/plain' });
+
+  // Write and end response
+  res.write('Hello, this is a response from Node.js server.\n');
+  res.end('Request handled successfully!');
+});
+
+server.listen(3000, () => console.log('Server running at http://localhost:3000'));
+```
