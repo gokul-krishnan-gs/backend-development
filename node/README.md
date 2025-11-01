@@ -160,5 +160,189 @@ When a package is uninstalled, it is deleted from the `node_modules/` folder and
 | `package-lock.json` | This file keeps the **exact versions of dependencies for consistency**. |
 
 If the `node_modules` folder is deleted, all packages can be easily reinstalled using the command: `npm install`.
+---
+# Node.js Path Module Guide
+
+## 🧭 1. What is the Path Module?
+
+The `path` module is a core (built-in) Node.js module that provides utilities for working with file and directory paths in a cross-platform way.
+
+✅ It handles differences between:
+* Windows paths: `C:\users\gokul\file.txt`
+* Linux/macOS paths: `/users/gokul/file.txt`
+
+So your app works everywhere without breaking.
+
+---
+
+## ⚙️ 2. How to Import It
+
+You don't need to install anything — it's built into Node.
+
+```javascript
+const path = require('path');
+```
+
+---
+
+## 📘 3. Commonly Used Path Methods
+
+Let's explore the most important ones with examples 👇
+
+### 🔹 path.join()
+
+👉 Joins multiple path segments together and normalizes the result.
+
+```javascript
+const filePath = path.join(__dirname, 'folder', 'file.txt');
+console.log(filePath);
+```
+
+**Output:**
+```
+C:\Users\Gokul\project\folder\file.txt
+```
+
+✅ Automatically fixes slashes (`/` or `\`) depending on the OS.
+
+---
+
+### 🔹 path.resolve()
+
+👉 Returns an absolute path from a sequence of paths.
+
+```javascript
+const fullPath = path.resolve('folder', 'file.txt');
+console.log(fullPath);
+```
+
+**Output (depends on where you run it):**
+```
+C:\Users\Gokul\project\folder\file.txt
+```
+
+✅ **Difference between `join()` and `resolve()`:**
+* `join()` combines paths.
+* `resolve()` gives you the absolute path.
+
+---
+
+### 🔹 path.basename()
+
+👉 Returns the file name from a path.
+
+```javascript
+const fullPath = '/users/gokul/app/index.js';
+console.log(path.basename(fullPath)); // index.js
+```
+
+You can also remove the extension:
+
+```javascript
+console.log(path.basename(fullPath, '.js')); // index
+```
+
+---
+
+### 🔹 path.dirname()
+
+👉 Returns the directory part of a path.
+
+```javascript
+console.log(path.dirname('/users/gokul/app/index.js'));
+```
+
+**Output:**
+```
+/users/gokul/app
+```
+
+---
+
+### 🔹 path.extname()
+
+👉 Returns the file extension.
+
+```javascript
+console.log(path.extname('index.html')); // .html
+console.log(path.extname('server.js'));  // .js
+```
+
+---
+
+### 🔹 path.parse()
+
+👉 Breaks a path into its components (object form).
+
+```javascript
+const parsed = path.parse('/users/gokul/app/index.js');
+console.log(parsed);
+```
+
+**Output:**
+```javascript
+{
+  root: '/',
+  dir: '/users/gokul/app',
+  base: 'index.js',
+  ext: '.js',
+  name: 'index'
+}
+```
+
+---
+
+### 🔹 path.format()
+
+👉 Opposite of `path.parse()` — it builds a path object back into a string.
+
+```javascript
+const formatted = path.format({
+  dir: '/users/gokul/app',
+  name: 'index',
+  ext: '.js'
+});
+
+console.log(formatted); // /users/gokul/app/index.js
+```
+
+---
+
+## 🧠 4. Special Global Variables
+
+These two are often used with the path module:
+
+| Variable | Description |
+|----------|-------------|
+| `__dirname` | Directory path of the current file |
+| `__filename` | Full path of the current file |
+
+**Example:**
+
+```javascript
+console.log(__dirname);  // e.g., C:\Users\Gokul\project
+console.log(__filename); // e.g., C:\Users\Gokul\project\app.js
+```
+
+Use them with `path.join()` to safely build paths:
+
+```javascript
+const file = path.join(__dirname, 'data', 'info.txt');
+console.log(file);
+```
+
+---
+
+## ⚡ 5. Summary Table
+
+| Method | Description | Example |
+|--------|-------------|---------|
+| `path.join()` | Joins paths safely | `path.join('folder', 'file.txt')` |
+| `path.resolve()` | Gives absolute path | `path.resolve('folder', 'file.txt')` |
+| `path.basename()` | Gets file name | `path.basename('/app.js')` |
+| `path.dirname()` | Gets directory | `path.dirname('/app.js')` |
+| `path.extname()` | Gets file extension | `path.extname('app.js')` |
+| `path.parse()` | Splits path into parts | `path.parse('/app.js')` |
+| `path.format()` | Rebuilds path from parts | `path.format({...})` |
   
 
