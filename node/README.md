@@ -345,4 +345,206 @@ console.log(file);
 | `path.parse()` | Splits path into parts | `path.parse('/app.js')` |
 | `path.format()` | Rebuilds path from parts | `path.format({...})` |
   
+---
 
+# Node.js File System (fs) Module Guide
+
+## 🧱 1. What is the File System (fs) Module?
+
+The `fs` module is a core built-in module in Node.js that allows you to work with your computer's file system.
+
+✅ You can:
+* Create, read, write, rename, or delete files/folders
+* Work with files in sync (blocking) or async (non-blocking) ways
+
+## ⚙️ 2. Importing the fs Module
+
+You don't need to install it:
+
+```javascript
+const fs = require('fs');
+```
+
+## ⚖️ 3. Sync vs Async Methods
+
+| Mode | Description | Blocks Code Execution? |
+|------|-------------|------------------------|
+| Synchronous | Methods with `Sync` at the end (e.g. `readFileSync`) | ❌ Yes (Waits until done) |
+| Asynchronous | Methods without `Sync` (e.g. `readFile`) | ✅ No (Runs in background, uses callback) |
+
+In production, always prefer async to avoid blocking your app.
+
+## 📖 4. Reading a File
+
+### 🔹 Asynchronous way (recommended)
+
+```javascript
+fs.readFile('example.txt', 'utf8', (err, data) => {
+  if (err) {
+    console.error('Error reading file:', err);
+    return;
+  }
+  console.log('File content:', data);
+});
+```
+
+✅ Doesn't block the rest of the code — executes the callback when done.
+
+### 🔹 Synchronous way
+
+```javascript
+try {
+  const data = fs.readFileSync('example.txt', 'utf8');
+  console.log('File content:', data);
+} catch (err) {
+  console.error('Error reading file:', err);
+}
+```
+
+⚠️ This blocks other operations until the file is fully read.
+
+## ✍️ 5. Writing to a File
+
+### 🔹 Async
+
+```javascript
+fs.writeFile('example.txt', 'Hello, Gokul!', (err) => {
+  if (err) {
+    console.error('Error writing file:', err);
+    return;
+  }
+  console.log('File written successfully!');
+});
+```
+
+✅ If the file doesn't exist, Node will create it automatically.
+
+### 🔹 Sync
+
+```javascript
+fs.writeFileSync('example.txt', 'Hello, Gokul!');
+console.log('File written successfully!');
+```
+
+## ➕ 6. Appending Data
+
+### 🔹 Async
+
+```javascript
+fs.appendFile('example.txt', '\nThis is new content.', (err) => {
+  if (err) throw err;
+  console.log('Data appended successfully!');
+});
+```
+
+### 🔹 Sync
+
+```javascript
+fs.appendFileSync('example.txt', '\nThis is new content.');
+```
+
+## ❌ 7. Deleting a File
+
+### 🔹 Async
+
+```javascript
+fs.unlink('example.txt', (err) => {
+  if (err) throw err;
+  console.log('File deleted!');
+});
+```
+
+### 🔹 Sync
+
+```javascript
+fs.unlinkSync('example.txt');
+```
+
+## 🏷️ 8. Renaming a File
+
+### 🔹 Async
+
+```javascript
+fs.rename('old.txt', 'new.txt', (err) => {
+  if (err) throw err;
+  console.log('File renamed successfully!');
+});
+```
+
+### 🔹 Sync
+
+```javascript
+fs.renameSync('old.txt', 'new.txt');
+```
+
+## 📁 9. Working with Directories
+
+### 🔹 Create Folder
+
+```javascript
+fs.mkdir('myFolder', (err) => {
+  if (err) throw err;
+  console.log('Folder created!');
+});
+```
+
+### 🔹 Remove Folder
+
+```javascript
+fs.rmdir('myFolder', (err) => {
+  if (err) throw err;
+  console.log('Folder deleted!');
+});
+```
+
+(For deleting folders with files, use `fs.rm('myFolder', { recursive: true })` in Node 14+.)
+
+## 🧩 10. Example: Reading and Writing Together
+
+```javascript
+fs.readFile('input.txt', 'utf8', (err, data) => {
+  if (err) throw err;
+  const output = `Uppercase: ${data.toUpperCase()}`;
+  
+  fs.writeFile('output.txt', output, (err) => {
+    if (err) throw err;
+    console.log('File processed and written!');
+  });
+});
+```
+
+✅ This reads `input.txt`, processes it, and saves it to `output.txt` asynchronously.
+
+## 📚 11. Summary Table
+
+| Operation | Async Method | Sync Method |
+|-----------|--------------|-------------|
+| Read File | `fs.readFile()` | `fs.readFileSync()` |
+| Write File | `fs.writeFile()` | `fs.writeFileSync()` |
+| Append File | `fs.appendFile()` | `fs.appendFileSync()` |
+| Delete File | `fs.unlink()` | `fs.unlinkSync()` |
+| Rename File | `fs.rename()` | `fs.renameSync()` |
+| Create Folder | `fs.mkdir()` | `fs.mkdirSync()` |
+| Remove Folder | `fs.rmdir()` / `fs.rm()` | `fs.rmdirSync()` / `fs.rmSync()` |
+
+## 💡 Pro Tip: Use Promises (Modern Way)
+
+Instead of callbacks, you can use promises with `fs.promises`:
+
+```javascript
+const fs = require('fs').promises;
+
+async function readWrite() {
+  try {
+    const data = await fs.readFile('example.txt', 'utf8');
+    await fs.writeFile('new.txt', data.toUpperCase());
+    console.log('Done!');
+  } catch (err) {
+    console.error(err);
+  }
+}
+
+readWrite();
+```
+
+✅ Cleaner and easier to manage for modern async/await style apps.
