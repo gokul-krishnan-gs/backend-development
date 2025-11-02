@@ -800,3 +800,138 @@ const server = http.createServer((req, res) => {
 
 server.listen(3000, () => console.log('Server running at http://localhost:3000'));
 ```
+# What is an Event Emitter in Node.js?
+
+Node.js is built on events — things like "data received," "connection closed," or "file finished reading."
+
+The Event Emitter is the core mechanism that allows objects to:
+* Emit (trigger) named events
+* Listen (subscribe) to those events
+* React when those events occur
+
+It's part of Node.js's `events` core module.
+
+## 🔹 Importing EventEmitter
+
+```javascript
+const EventEmitter = require('events');
+```
+
+Then you can create an instance:
+
+```javascript
+const emitter = new EventEmitter();
+```
+
+## 🔹 Basic Example
+
+```javascript
+const EventEmitter = require('events');
+const emitter = new EventEmitter();
+
+// 1️⃣ Listen for an event
+emitter.on('greet', () => {
+  console.log('Hello, Gokul!');
+});
+
+// 2️⃣ Emit (trigger) the event
+emitter.emit('greet');
+```
+
+Output:
+
+```
+Hello, Gokul!
+```
+
+✅ The `.on()` method is used to listen, and `.emit()` is used to trigger the event.
+
+## 🧠 EventEmitter Methods
+
+| Method | Description |
+|--------|-------------|
+| `.on(event, listener)` | Register a listener for an event |
+| `.emit(event, [args...])` | Trigger the event (can pass arguments) |
+| `.once(event, listener)` | Listen only once; auto removes after first emit |
+| `.removeListener(event, listener)` | Remove a specific listener |
+| `.removeAllListeners([event])` | Remove all listeners for an event |
+| `.listenerCount(event)` | Returns how many listeners an event has |
+
+## 🔹 Passing Arguments to Events
+
+```javascript
+const EventEmitter = require('events');
+const emitter = new EventEmitter();
+
+emitter.on('order', (item, quantity) => {
+  console.log(`Order received: ${quantity} x ${item}`);
+});
+
+emitter.emit('order', 'Pizza', 2);
+```
+
+Output:
+
+```
+Order received: 2 x Pizza
+```
+
+## 🔹 `once()` — Listen Only One Time
+
+```javascript
+emitter.once('login', () => {
+  console.log('User logged in (only once)');
+});
+
+emitter.emit('login');
+emitter.emit('login');
+```
+
+Output:
+
+```
+User logged in (only once)
+```
+
+## 🔹 Removing Event Listeners
+
+```javascript
+function greet() {
+  console.log('Hi Gokul!');
+}
+
+emitter.on('hello', greet);
+emitter.removeListener('hello', greet); // or emitter.off('hello', greet);
+emitter.emit('hello'); // No output
+```
+
+## 🔹 Practical Example — Custom Event with Logic
+
+```javascript
+const EventEmitter = require('events');
+
+class School extends EventEmitter {
+  startPeriod() {
+    console.log('Class period started');
+    // Emit custom event
+    this.emit('bellRing', { period: '1st', time: '9:00 AM' });
+  }
+}
+
+const school = new School();
+
+// Listen for the event
+school.on('bellRing', (data) => {
+  console.log(`Bell rang for ${data.period} period at ${data.time}`);
+});
+
+// Trigger
+school.startPeriod();
+```
+
+Output:
+
+```
+Class period started
+Bell rang for 1st period at 9:00 AM
+```
