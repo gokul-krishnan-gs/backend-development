@@ -138,3 +138,96 @@ If you visit `/api/products/5`, 👉 `req.params.id` will be `'5'`
 | `res.status()` | Set HTTP status code | `res.status(404).send('Not Found')` |
 | `res.json()` | Send JSON response | `res.json({name:'Gokul'})` |
 | `req.params` | Get URL parameters | `/user/:id` → `req.params.id` |
+
+# 🧠 Middleware in Express.js
+
+## 🔹 Definition
+
+A middleware is a function that runs between the request and the response in an Express application. It can modify the request, perform actions, or control the flow of how the request is handled.
+
+## ⚙️ Syntax
+
+```javascript
+app.use((req, res, next) => {
+  // your code here
+  next(); // pass control to the next middleware or route
+});
+```
+
+## 🎯 Main Uses of Middleware
+
+1. **Logging** – To print or record request info.
+2. **Authentication** – To verify users before allowing access.
+3. **Parsing** – To read data from `req.body` (JSON, forms).
+4. **Serving static files** – To send HTML, CSS, images, etc.
+5. **Error handling** – To catch and manage errors.
+6. **Custom logic** – To modify or add properties to `req` or `res`.
+
+## 🧩 `app.use()`
+
+- Used to register middleware globally.
+- Every request passes through this middleware.
+
+```javascript
+app.use((req, res, next) => {
+  console.log(`${req.method} ${req.url}`);
+  next();
+});
+```
+
+## 🔹 `next()`
+
+Moves control to the next middleware or route handler.
+
+**Important:** If `next()` is not called and no response is sent → the request will hang (no reply).
+
+**Example:**
+
+```javascript
+app.use((req, res, next) => {
+  console.log("Middleware running...");
+  next();
+});
+```
+
+## 🔹 Types of Middleware
+
+- **Application-level** – Created using `app.use()` or `app.METHOD()`.
+- **Router-level** – Works on specific routes using `express.Router()`.
+- **Built-in** – Provided by Express (like `express.json()`, `express.static()`).
+- **Third-party** – External packages like `morgan`, `cors`, etc.
+
+## 🔹 Example
+
+```javascript
+const express = require("express");
+const app = express();
+
+// Logger middleware
+app.use((req, res, next) => {
+  console.log(`${req.method} ${req.url}`);
+  next();
+});
+
+// Authentication middleware
+app.use((req, res, next) => {
+  if (req.query.token === "1234") next();
+  else res.status(403).send("Access Denied");
+});
+
+app.get("/", (req, res) => {
+  res.send("Welcome to Cricket Store");
+});
+
+app.listen(8000, () => console.log("Server running at 8000"));
+```
+
+## ⚡ Summary Table
+
+| Keyword | Description |
+|---------|-------------|
+| **Middleware** | Function between request and response |
+| **app.use()** | Registers middleware |
+| **next()** | Moves to next middleware or route |
+| **If next() not called** | Request stops / hangs |
+| **Common uses** | Logging, Auth, Parsing, Static, Error Handling |
