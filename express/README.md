@@ -379,3 +379,261 @@ app.get("/players", (req, res) => {
 | **Render** | `res.render('filename', { data })` |
 | **Syntax** | `<%= %>` for output, `<% %>` for logic |
 | **Folder** | All `.ejs` files go inside `/views` |
+
+
+---
+# Express JSON Methods Guide
+
+## 🧩 express.json()
+
+* Used on the **Request side** 📨
+* Converts **JSON → JavaScript Object**
+* Stores it in `req.body`
+
+### Example:
+
+```javascript
+app.use(express.json()); // Middleware
+
+app.post("/user", (req, res) => {
+  console.log(req.body); // JS object
+});
+```
+
+If frontend sends:
+
+```json
+{ "name": "Gokul" }
+```
+
+Then inside server:
+
+```javascript
+req.body = { name: "Gokul" }
+```
+
+---
+
+## 🧩 res.json()
+
+* Used on the **Response side** 📤
+* Converts **JavaScript Object → JSON**
+* Sends it back to the client
+
+### Example:
+
+```javascript
+app.get("/user", (req, res) => {
+  res.json({ name: "Gokul", age: 22 });
+});
+```
+
+Client receives:
+
+```json
+{ "name": "Gokul", "age": 22 }
+```
+
+---
+
+## ⚖️ Simple Comparison Table
+
+| Function | Direction | Conversion | Example |
+|----------|-----------|------------|---------|
+| `express.json()` | Request (incoming) | JSON → JS Object | `req.body` |
+| `res.json()` | Response (outgoing) | JS Object → JSON | `res.json({ ... })` |
+
+---
+
+## 🧠 Think of it like this:
+
+* `express.json()` **understands** JSON coming in
+* `res.json()` **speaks** JSON going out
+---
+
+
+# REST API Complete Guide
+
+## 🌍 1. What is an API?
+
+**API (Application Programming Interface)** is a set of rules that allows two software programs to communicate.
+
+👉 **Example:** When your phone's weather app requests data from a weather server, it uses an API.
+
+---
+
+## ⚙️ 2. What is REST?
+
+**REST (Representational State Transfer)** is an architecture style for designing APIs using HTTP methods.
+
+Each resource (like a product, user, post) is identified by a URL (endpoint).
+
+---
+
+## 🧠 3. REST API Definition
+
+A REST API is a system that:
+* Uses HTTP for communication
+* Represents data as resources
+* Is stateless (each request is independent)
+* Returns data in JSON format
+
+---
+
+## 🧩 4. Core REST Concepts
+
+| Term | Description |
+|------|-------------|
+| **Resource** | Data entity (example: user, product, order) |
+| **Endpoint** | URL path for accessing resources (`/api/products`) |
+| **Stateless** | Every request is independent |
+| **Representation** | The format of data (usually JSON) |
+| **Client** | The one requesting data (browser, app, frontend) |
+| **Server** | The one sending response (your Node.js backend) |
+
+---
+
+## 🧾 5. Common HTTP Methods
+
+| Method | Purpose | Example Endpoint |
+|--------|---------|------------------|
+| **GET** | Read data | `/api/products` |
+| **POST** | Create new data | `/api/products` |
+| **PUT** | Update entire data | `/api/products/:id` |
+| **PATCH** | Update part of data | `/api/products/:id` |
+| **DELETE** | Delete data | `/api/products/:id` |
+
+---
+
+## 🧱 6. CRUD Operations
+
+**CRUD = Create, Read, Update, Delete**
+
+These are the basic operations you perform using HTTP methods.
+
+| Operation | HTTP | Example |
+|-----------|------|---------|
+| **Create** | POST | `/api/products` |
+| **Read** | GET | `/api/products` |
+| **Update** | PUT/PATCH | `/api/products/:id` |
+| **Delete** | DELETE | `/api/products/:id` |
+
+---
+
+## 🚀 7. REST API Setup (Basic Express Example)
+
+```javascript
+const express = require("express");
+const app = express();
+app.use(express.json()); // Middleware to parse JSON
+
+let products = [
+  { id: 1, name: "Bat", brand: "MRF" },
+  { id: 2, name: "Ball", brand: "SG" },
+];
+
+// READ (all)
+app.get("/api/products", (req, res) => {
+  res.json(products);
+});
+
+// READ (single)
+app.get("/api/products/:id", (req, res) => {
+  const product = products.find(p => p.id === parseInt(req.params.id));
+  product ? res.json(product) : res.status(404).send("Not Found");
+});
+
+// CREATE
+app.post("/api/products", (req, res) => {
+  const newProduct = {
+    id: products.length + 1,
+    name: req.body.name,
+    brand: req.body.brand,
+  };
+  products.push(newProduct);
+  res.status(201).json(newProduct);
+});
+
+// UPDATE
+app.put("/api/products/:id", (req, res) => {
+  const product = products.find(p => p.id === parseInt(req.params.id));
+  if (!product) return res.status(404).send("Not Found");
+  product.name = req.body.name;
+  product.brand = req.body.brand;
+  res.json(product);
+});
+
+// DELETE
+app.delete("/api/products/:id", (req, res) => {
+  products = products.filter(p => p.id !== parseInt(req.params.id));
+  res.send("Deleted successfully");
+});
+
+app.listen(8000, () => console.log("Server running on port 8000"));
+```
+
+---
+
+## 🧠 8. Important Express Features Used
+
+| Term | Description |
+|------|-------------|
+| `express.json()` | Middleware to parse JSON data from requests |
+| `req.body` | Access data sent by the client in POST/PUT requests |
+| `req.params` | Get values from URL (e.g., `/api/products/:id`) |
+| `req.query` | Get query strings (e.g., `/api/products?brand=MRF`) |
+| `res.send()` | Send text/HTML response |
+| `res.json()` | Send JSON response |
+| `res.status()` | Set HTTP status code |
+
+---
+
+## ⚡ 9. REST API Best Practices
+
+### 1. Use plural nouns for endpoints
+* ✅ `/api/products`
+* ❌ `/api/product`
+
+### 2. Use correct HTTP methods
+* GET for reading
+* POST for creating
+* PUT/PATCH for updating
+* DELETE for deleting
+
+### 3. Return proper status codes
+
+| Code | Meaning |
+|------|---------|
+| 200 | OK |
+| 201 | Created |
+| 400 | Bad Request |
+| 401 | Unauthorized |
+| 404 | Not Found |
+| 500 | Server Error |
+
+### 4. Use JSON format for all data
+
+```json
+{
+  "id": 1,
+  "name": "Bat",
+  "brand": "MRF"
+}
+```
+
+### 5. Make it stateless
+Each request should contain all the data needed (no session memory).
+
+### 6. Use proper naming
+* `/api/products/:id`
+* `/api/users/:userId/orders`
+
+---
+
+## 🧰 10. Common Tools Used
+
+| Tool | Use |
+|------|-----|
+| **Postman / Thunder Client** | Test your API endpoints |
+| **Nodemon** | Automatically restart server |
+| **Express** | Framework for REST APIs |
