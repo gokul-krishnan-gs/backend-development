@@ -231,3 +231,151 @@ app.listen(8000, () => console.log("Server running at 8000"));
 | **next()** | Moves to next middleware or route |
 | **If next() not called** | Request stops / hangs |
 | **Common uses** | Logging, Auth, Parsing, Static, Error Handling |
+
+# 🧠 What is EJS?
+
+EJS (Embedded JavaScript) is a templating engine for Node.js and Express. It allows you to write HTML pages that can include JavaScript logic, variables, and dynamic data.
+
+**In short:** 👉 EJS helps you generate dynamic HTML pages from your Express backend.
+
+---
+
+## ⚙️ How to Install and Setup EJS
+
+### 1️⃣ Install EJS
+
+```bash
+npm install ejs
+```
+
+### 2️⃣ Set View Engine in Express
+
+```javascript
+const express = require("express");
+const app = express();
+
+app.set("view engine", "ejs");
+```
+
+Now Express knows that you'll use `.ejs` files inside a `views/` folder.
+
+---
+
+## 📁 Project Structure Example
+
+```
+project/
+│
+├── views/
+│   ├── index.ejs
+│   └── about.ejs
+│
+└── server.js
+```
+
+---
+
+## 🧩 Example 1 — Basic EJS Page
+
+### server.js
+
+```javascript
+const express = require("express");
+const app = express();
+const PORT = 8000;
+
+app.set("view engine", "ejs");
+
+app.get("/", (req, res) => {
+  const title = "Welcome to Cricket Store";
+  res.render("index", { pageTitle: title });
+});
+
+app.listen(PORT, () => console.log(`Server running on ${PORT}`));
+```
+
+### views/index.ejs
+
+```html
+<!DOCTYPE html>
+<html>
+  <head>
+    <title><%= pageTitle %></title>
+  </head>
+  <body>
+    <h1><%= pageTitle %></h1>
+    <p>This page is rendered using EJS template.</p>
+  </body>
+</html>
+```
+
+✅ `res.render()` — Renders an EJS file and sends it as HTML to the browser.  
+✅ `<%= %>` — Used to output (display) a value.
+
+---
+
+## 🧩 Example 2 — Using Loops and Conditions
+
+### server.js
+
+```javascript
+app.get("/players", (req, res) => {
+  const players = [
+    { name: "Rohit Sharma", team: "India" },
+    { name: "Ben Stokes", team: "England" },
+    { name: "Steve Smith", team: "Australia" },
+  ];
+  res.render("players", { players });
+});
+```
+
+### views/players.ejs
+
+```html
+<h1>Player List</h1>
+
+<ul>
+  <% players.forEach(player => { %>
+    <li><%= player.name %> - <%= player.team %></li>
+  <% }); %>
+</ul>
+```
+
+✅ `<% %>` — for JavaScript logic (loops, if statements).  
+✅ `<%= %>` — to display output on the page.
+
+---
+
+## 🧩 Example 3 — Conditional Rendering
+
+```html
+<% if (players.length > 0) { %>
+  <p>Total Players: <%= players.length %></p>
+<% } else { %>
+  <p>No players found.</p>
+<% } %>
+```
+
+---
+
+## 🧾 Common EJS Tags
+
+| Tag | Use |
+|-----|-----|
+| `<%= value %>` | Output value (escaped HTML) |
+| `<%- value %>` | Output raw HTML |
+| `<% code %>` | Run JavaScript logic (no output) |
+| `<%- include('file') %>` | Include another EJS file (like a header or footer) |
+
+---
+
+## ⚡ Summary
+
+| Concept | Description |
+|---------|-------------|
+| **EJS** | Template engine to render dynamic HTML |
+| **Install** | `npm install ejs` |
+| **Setup** | `app.set('view engine', 'ejs')` |
+| **Render** | `res.render('filename', { data })` |
+| **Syntax** | `<%= %>` for output, `<% %>` for logic |
+| **Folder** | All `.ejs` files go inside `/views` |
