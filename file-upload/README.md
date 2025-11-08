@@ -344,3 +344,345 @@ app.listen(PORT, () => console.log(`Server is running🔥`));
 |--------|----------|--------|-------------|
 | POST | `/api/image/upload` | Admin only | Upload image to Cloudinary |
 | GET | `/api/image/get` | Authenticated users | Fetch all uploaded images |
+
+### delete images and change password
+
+## 🧩 1. deleteImage Function — Detailed Explanation
+
+```javascript
+async function deleteImage(req, res) {
+  try {
+    const getCurrentIdOfImageToBeDelted = req.params.id;
+    const userId = req.userInfo.userId;
+
+    const image = await Image.findById(getCurrentIdOfImageToBeDelted);
+
+    if (!image) {
+      return res.status(400).json({
+        success: false,
+        message: "Image not found"
+      });
+    }
+
+    if (image.uploadedBy.toString() !== userId) {
+      return res.status(403).json({
+        success: false,
+        message: "Cant delete , because it is not uploaded by you!"
+      });
+    }
+
+    await cloudinary.uploader.destroy(image.publicId);
+
+    await Image.findByIdAndDelete(getCurrentIdOfImageToBeDelted);
+
+    res.status(200).json({
+      success: true,
+      message: "Image deleted successfully"
+    });
+
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: `something went wrong! Please try again`
+    });
+  }
+}
+```
+
+### 🧠 Step-by-Step Explanation
+
+| Step | Description |
+|------|-------------|
+| 1. Extract Image ID from URL | `req.params.id` → The image ID is sent in the route parameter (`DELETE /api/image/:id`). |
+| 2. Get User ID from Token | `req.userInfo.userId` → Comes from your authMiddleware (decoded JWT). This identifies the logged-in user. |
+| 3. Find Image in Database | `Image.findById()` searches the MongoDB collection for the image with that ID. |
+| 4. Validate Image Exists | If image not found → return error 400 Image not found. |
+| 5. Check Ownership | If the logged-in user didn't upload it → return 403 Forbidden. This prevents others from deleting your images. |
+| 6. Delete from Cloudinary | `cloudinary.uploader.destroy(image.publicId)` removes the image from Cloudinary storage. |
+| 7. Delete from MongoDB | `Image.findByIdAndDelete()` removes the image document from the database. |
+| 8. Send Success Response | Return a JSON response: Image deleted successfully. |
+| 9. Catch Errors | Any unexpected errors go to the catch block and return 500 Internal Server Error. |
+
+### ✅ Purpose
+This function ensures secure deletion of an image — only the uploader can delete it, and it's removed from both Cloudinary and MongoDB.
+
+---
+
+## 🔐 2. changePassword Function — Detailed Explanation
+
+```javascript
+async function changePassword(req, res) {
+  try {
+    const userId = req.userInfo.userId;
+    const { oldPassword, newPassword } = req.body;
+
+    const user = await User.findById(userId);
+
+    if (!user) {
+      return res.status(400).json({
+        success: false,
+        message: "User not found"
+      });
+    }
+
+    const isPasswordMatch = await bcrypt.compare(oldPassword, user.password);
+
+    if (!isPasswordMatch) {
+      return res.status(400).json({
+        success: false,
+        message: "Incorrect password! Please Try Again"
+      });
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    const hashNewPassword = await bcrypt.hash(newPassword, salt);
+
+    user.password = hashNewPassword;
+    await user.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Password changed successfuly"
+    });
+
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({
+      message: "Server Internal Error"
+    });
+  }
+}
+```
+
+### 🧠 Step-by-Step Explanation
+
+| Step | Description |
+|------|-------------|
+| 1. Get User ID from Token | The logged-in user's ID is taken from `req.userInfo.userId`. |
+| 2. Extract Passwords | The user sends `{ oldPassword, newPassword }` in the request body. |
+| 3. Find User in DB | Using `User.findById()` to fetch the user document. |
+| 4. Check User Exists | If not found → return 400 User not found. |
+| 5. Verify Old Password | Compare entered old password with stored hash using `bcrypt.compare()`. |
+| 6. If Incorrect, Reject | If old password doesn't match → send error message. |
+| 7. Hash New Password | Generate a new salt using `bcrypt.genSalt(10)` and hash the new password. |
+| 8. Update User Password | Replace old hash with new hash and save user document. |
+| 9. Send Success Message | Return 200 OK and confirmation message. |
+| 10. Handle Errors | Any unexpected issue → log error + return 500 Internal Server Error. |
+
+### ✅ Purpose
+This ensures secure password updating — the user must first confirm their old password before changing it. Hashing keeps the new password safe in the database.
+
+---
+
+## 🧩 3. Router Setup
+
+```javascript
+router.delete('/:id', authMiddleWare, adminMiddleWare, deleteImage);
+```
+
+### 🔍 Explanation
+
+- **authMiddleWare** → Ensures the user is logged in and JWT is valid.
+- **adminMiddleWare** → Allows only admins to access or adds extra validation logic.
+- **deleteImage** → The controller function to delete the image securely.
+
+---
+
+## 🧱 Summary
+
+| Feature | Purpose | Security |
+|---------|---------|----------|
+| Delete Image | Allows users to remove their own uploaded images. | Prevents unauthorized deletions using ownership check. |
+| Change Password | Lets users securely update their password. | Uses bcrypt for hashing and requires old password validation. |
+
+# 🧩 Fetch Images with Sorting & Pagination
+
+```javascript
+async function fetchImages(req, res) {
+  try {
+    // sorting and pagination
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 5;
+
+    const skip = (page - 1) * limit;
+
+    const sortBy = req.query.sortBy || 'createdAt';
+    const sortOrder = req.query.sortOrder === 'asc' ? 1 : -1;
+
+    const totalImages = await Image.countDocuments();
+    const totalPages = Math.ceil(totalImages / limit);
+
+    const sortObj = {};
+    sortObj[sortBy] = sortOrder;
+
+    const images = await Image.find()
+      .sort(sortObj)
+      .skip(skip)
+      .limit(limit);
+
+    if (images) {
+      res.status(200).json({
+        success: true,
+        currentPage: page,
+        totalPages: totalPages,
+        totalImages: totalImages,
+        data: images
+      });
+    }
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      success: false,
+      message: `something went wrong! Please try again`
+    });
+  }
+}
+```
+
+## ⚙️ Step-by-Step Explanation
+
+### 1️⃣ Pagination Parameters
+
+```javascript
+const page = parseInt(req.query.page) || 1;
+const limit = parseInt(req.query.limit) || 5;
+```
+
+* Reads `page` and `limit` from the query string. Example:
+
+```
+GET /api/images?page=2&limit=10
+```
+
+* Defaults:
+  * `page = 1` → First page.
+  * `limit = 5` → Show 5 items per page.
+
+### 2️⃣ Calculate Skip (offset)
+
+```javascript
+const skip = (page - 1) * limit;
+```
+
+* Determines how many documents to skip before fetching the current page.
+  * Example:
+    * Page 1 → skip 0
+    * Page 2 → skip 5
+    * Page 3 → skip 10
+
+This ensures pagination displays only the requested set of images.
+
+### 3️⃣ Sorting Parameters
+
+```javascript
+const sortBy = req.query.sortBy || 'createdAt';
+const sortOrder = req.query.sortOrder === 'asc' ? 1 : -1;
+```
+
+* Lets user choose which field to sort by.
+* Sort order can be:
+  * `"asc"` → ascending order
+  * `"desc"` → descending order
+
+Example query:
+
+```
+GET /api/images?sortBy=title&sortOrder=asc
+```
+
+### 4️⃣ Count Total Documents
+
+```javascript
+const totalImages = await Image.countDocuments();
+const totalPages = Math.ceil(totalImages / limit);
+```
+
+* Counts total number of images in DB.
+* Calculates total pages based on limit per page.
+
+Example:
+* 42 images, limit = 5 → totalPages = 9
+
+### 5️⃣ Build Sort Object
+
+```javascript
+const sortObj = {};
+sortObj[sortBy] = sortOrder;
+```
+
+This dynamically creates the sort condition for MongoDB. Example:
+
+```javascript
+{ createdAt: -1 }   // Sort newest first
+{ title: 1 }        // Sort alphabetically ascending
+```
+
+### 6️⃣ Fetch Paginated & Sorted Data
+
+```javascript
+const images = await Image.find()
+  .sort(sortObj)
+  .skip(skip)
+  .limit(limit);
+```
+
+This query: ✅ sorts ✅ skips unnecessary records ✅ limits results → Efficient + fast response.
+
+### 7️⃣ Response Sent to Frontend
+
+```javascript
+res.status(200).json({
+  success: true,
+  currentPage: page,
+  totalPages: totalPages,
+  totalImages: totalImages,
+  data: images
+});
+```
+
+The response gives full pagination data, e.g.:
+
+```json
+{
+  "success": true,
+  "currentPage": 2,
+  "totalPages": 9,
+  "totalImages": 42,
+  "data": [ ... ]
+}
+```
+
+This helps the frontend easily display:
+* Pagination buttons
+* Page numbers
+* Sorting dropdowns
+
+### 8️⃣ Error Handling
+
+```javascript
+catch (error) {
+  console.error(error);
+  res.status(500).json({
+    success: false,
+    message: `something went wrong! Please try again`
+  });
+}
+```
+
+Catches and reports internal errors gracefully without crashing the server.
+
+## 🧱 Example API Requests
+
+| Request | Description |
+|---------|-------------|
+| `/api/images` | Default: page=1, limit=5, sort by `createdAt` descending |
+| `/api/images?page=2&limit=10` | Fetch second page with 10 images |
+| `/api/images?sortBy=title&sortOrder=asc` | Sort alphabetically by title |
+| `/api/images?page=3&sortBy=size&sortOrder=desc` | Fetch page 3 sorted by size descending |
+
+## 🎯 Purpose
+
+This function makes your backend scalable and frontend-friendly — it ensures that when your image gallery grows to hundreds or thousands of items:
+* The user only loads a few per page.
+* Data stays fast and responsive.
+* Sorting helps in easily finding the right image.
