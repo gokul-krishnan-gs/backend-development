@@ -368,3 +368,283 @@ mutation {
 ✅ Understood schema, queries, mutations, resolvers  
 ✅ Successfully tested using Apollo Sandbox  
 ✅ Gained full knowledge of GraphQL flow and structure
+
+# GraphQL + Apollo + MongoDB Backend 
+
+Built a simple backend that:
+- Connects to MongoDB using Mongoose
+- Uses GraphQL (Apollo Server) to define and query product data
+- Has CRUD operations for products
+
+## 🧩 FILE STRUCTURE (Best Practice)
+
+```
+graphql-apollo-mongo/
+│
+├── database/
+│   └── db.js
+│
+├── graphql/
+│   ├── schema.js
+│   └── resolvers.js
+│
+├── models/
+│   └── Products.js
+│
+├── server.js
+└── .env
+```
+
+## 🧠 FILE EXPLANATIONS
+
+### 1️⃣ .env
+
+Holds environment variables (like PORT, database URL).
+
+```env
+PORT=4000
+MONGO_URI=mongodb://localhost:27017/productsDB
+```
+
+### 2️⃣ database/db.js
+
+Connects MongoDB using Mongoose.
+
+```javascript
+const mongoose = require("mongoose");
+require("dotenv").config();
+
+const connectDB = async () => {
+  try {
+    await mongoose.connect(process.env.MONGO_URI);
+    console.log("✅ MongoDB connected successfully");
+  } catch (error) {
+    console.error("❌ MongoDB connection failed:", error.message);
+    process.exit(1);
+  }
+};
+
+module.exports = connectDB;
+```
+
+**📝 Notes:**
+- `mongoose.connect()` → connects to MongoDB
+- `process.env.MONGO_URI` → gets the connection string from .env
+- `process.exit(1)` → stops the app if DB fails to connect
+
+### 3️⃣ models/Products.js
+
+Defines how the product data looks in MongoDB (schema).
+
+```javascript
+const mongoose = require("mongoose");
+
+const ProductSchema = new mongoose.Schema({
+  title: { type: String, required: true },
+  category: { type: String, required: true },
+  price: { type: Number, required: true },
+  inStock: { type: Boolean, required: true }
+});
+
+module.exports = mongoose.model("Product", ProductSchema);
+```
+
+**📝 Notes:**
+- Schema = structure of data
+- Model = object to interact with MongoDB (find, save, delete, etc.)
+
+### 4️⃣ graphql/schema.js
+
+Defines GraphQL data types and available operations (Queries & Mutations).
+
+```javascript
+const { gql } = require("graphql-tag");
+
+const typeDefs = gql`
+  type Product {
+    id: ID!
+    title: String!
+    category: String!
+    price: Float!
+    inStock: Boolean!
+  }
+
+  type Query {
+    products: [Product]!
+    product(id: ID!): Product
+  }
+
+  type Mutation {
+    createProduct(
+      title: String!
+      category: String!
+      price: Float!
+      inStock: Boolean!
+    ): Product
+
+    deleteProduct(id: ID!): Boolean
+
+    updateProduct(
+      id: ID!
+      title: String
+      category: String
+      price: Float
+      inStock: Boolean
+    ): Product
+  }
+`;
+
+module.exports = typeDefs;
+```
+
+**📝 Notes:**
+- `type Query` → Read operations (like GET)
+- `type Mutation` → Write operations (POST, PUT, DELETE)
+- `Product` type defines what fields exist
+
+### 5️⃣ graphql/resolvers.js
+
+Defines how each query or mutation actually works.
+
+```javascript
+const Products = require("../models/Products.js");
+
+const resolvers = {
+  Query: {
+    products: async () => await Products.find(),
+    product: async (_, { id }) => await Products.findById(id)
+  },
+
+  Mutation: {
+    createProduct: async (_, args) => {
+      const newlyCreatedProduct = new Products(args);
+      return await newlyCreatedProduct.save();
+    },
+
+    deleteProduct: async (_, { id }) => {
+      const deleted = await Products.findByIdAndDelete(id);
+      return !!deleted; // returns true if deleted
+    },
+
+    updateProduct: async (_, { id, ...updateFields }) => {
+      return await Products.findByIdAndUpdate(id, updateFields, { new: true });
+    }
+  }
+};
+
+module.exports = resolvers;
+```
+
+**📝 Notes:**
+- `products()` → returns all products
+- `product(id)` → returns single product by ID
+- `createProduct()` → inserts new product
+- `updateProduct()` → modifies an existing one
+- `deleteProduct()` → removes by ID
+
+### 6️⃣ server.js
+
+Starts Apollo Server and connects everything.
+
+```javascript
+require("dotenv").config();
+const { ApolloServer } = require("@apollo/server");
+const { startStandaloneServer } = require("@apollo/server/standalone");
+
+const typeDefs = require("./graphql/schema.js");
+const resolvers = require("./graphql/resolvers.js");
+const connectDB = require("./database/db.js");
+
+async function startServer() {
+  await connectDB();
+
+  const server = new ApolloServer({ typeDefs, resolvers });
+
+  const { url } = await startStandaloneServer(server, {
+    listen: { port: process.env.PORT },
+  });
+
+  console.log(`🚀 Server running at ${url}`);
+}
+
+startServer();
+```
+
+**📝 Notes:**
+- `ApolloServer` = main GraphQL server
+- `startStandaloneServer` = simple setup that runs without express middleware
+- Everything runs on one endpoint → `/graphql`
+
+## 🧪 TEST IT (GraphQL Playground)
+
+After running:
+
+```bash
+node server.js
+```
+
+Visit 👉 http://localhost:4000/graphql
+
+### ✅ Create Product
+
+```graphql
+mutation {
+  createProduct(
+    title: "iPhone 16"
+    category: "Mobile"
+    price: 1299.99
+    inStock: true
+  ) {
+    id
+    title
+  }
+}
+```
+
+### ✅ Get All Products
+
+```graphql
+query {
+  products {
+    id
+    title
+    category
+    price
+    inStock
+  }
+}
+```
+
+### ✅ Update Product
+
+```graphql
+mutation {
+  updateProduct(
+    id: "YOUR_PRODUCT_ID"
+    price: 1399.99
+  ) {
+    id
+    title
+    price
+  }
+}
+```
+
+### ✅ Delete Product
+
+```graphql
+mutation {
+  deleteProduct(id: "YOUR_PRODUCT_ID")
+}
+```
+
+## 💡 EXTRA NOTES
+
+| Concept | Explanation |
+|---------|-------------|
+| typeDefs | Define GraphQL schema (structure) |
+| resolvers | Functions that resolve the data for schema |
+| ApolloServer | GraphQL server library |
+| Mongoose | ODM to interact with MongoDB |
+| @apollo/server/standalone | Runs Apollo without separate Express setup |
+| args | The arguments passed in GraphQL query or mutation |
