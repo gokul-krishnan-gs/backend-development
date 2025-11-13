@@ -1,0 +1,4 @@
+{"level":"info","message":"Server is starting...","service":"user-service","timestamp":"2025-11-13T07:07:31.206Z"}
+{"level":"info","message":"Server running on http://localhost:8000","service":"user-service","timestamp":"2025-11-13T07:07:31.220Z"}
+{"level":"info","message":"Home route accessed","service":"user-service","timestamp":"2025-11-13T07:07:54.901Z"}
+{"level":"error","message":"Error occurred: Something went wrong!","service":"user-service","timestamp":"2025-11-13T07:08:07.437Z"}
